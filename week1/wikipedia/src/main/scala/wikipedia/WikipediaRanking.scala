@@ -31,7 +31,12 @@ object WikipediaRanking {
     * Hint3: the only whitespaces are blanks " "
     * Hint4: no need to search in the title :)
     */
-  def occurrencesOfLang(lang: String, rdd: RDD[WikipediaArticle]): Int = ???
+  def occurrencesOfLang(lang: String, rdd: RDD[WikipediaArticle]): Int =
+    rdd.aggregate(0)(
+      (count, article) =>
+        if (article.text.matches("(.*\\W)?" + lang + "(\\W.*)?")) count + 1
+        else count,
+      _ + _)
 
   /* (1) Use `occurrencesOfLang` to compute the ranking of the languages
    *     (`val langs`) by determining the number of Wikipedia articles that
@@ -41,8 +46,8 @@ object WikipediaRanking {
    *   Note: this operation is long-running. It can potentially run for
    *   several seconds.
    */
-  def rankLangs(langs: List[String], rdd: RDD[WikipediaArticle]): List[(String, Int)] = ???
-
+  def rankLangs(langs: List[String], rdd: RDD[WikipediaArticle]): List[(String, Int)] =
+    langs.map(lang => (lang, occurrencesOfLang(lang, rdd))).sortWith(_._2 > _._2)
 
   /* Compute an inverted index of the set of articles, mapping each language
    * to the Wikipedia pages in which it occurs.
