@@ -12,9 +12,9 @@ import java.nio.channels.Channels
 import java.io.File
 import java.io.FileOutputStream
 
+
 @RunWith(classOf[JUnitRunner])
 class StackOverflowSuite extends FunSuite with BeforeAndAfterAll {
-
 
   lazy val testObject = new StackOverflow {
     override val langs =
@@ -39,7 +39,7 @@ class StackOverflowSuite extends FunSuite with BeforeAndAfterAll {
 
   test("groupedPostings returns empty RDD") {
     import StackOverflow._
-    val posts = sc.parallelize(Seq(Posting(2, 1, None, None, 0, Some("Java"))))
+    val posts = sc.parallelize(Seq.empty[Posting])
     assert(testObject.groupedPostings(posts).isEmpty(), "groupedPosting should be empty if just answers are supplied.")
   }
 
@@ -61,6 +61,34 @@ class StackOverflowSuite extends FunSuite with BeforeAndAfterAll {
     val grouped = testObject.groupedPostings(posts)
     assert(grouped.count() == 1, "groupedPostings group correctly - count")
     assert(grouped.collectAsMap().keys == Set(2), "groupedPostings group correctly - keys")
+  }
+
+  test("scoredPostings work for empty groupPostings") {
+    import StackOverflow._
+    val posts = sc.parallelize(Seq.empty[Posting])
+    val grouped = testObject.groupedPostings(posts)
+    assert(testObject.scoredPostings(grouped).isEmpty(), "scoredPostings shoudl work for empty groupPostings")
+  }
+
+  test("scoredPostings get the right scores") {
+    import StackOverflow._
+    val posts = sc.parallelize(Seq(
+      Posting(2, 1, None, Some(2), 0, Some("Java")),
+      Posting(1, 2, None, None, 3, Some("Java")),
+      Posting(2, 3, None, Some(2), 5, Some("Java")),
+      Posting(1, 4, None, None, 2, Some("Scala")),
+      Posting(2, 5, None, Some(4), 2, Some("Scala")),
+      Posting(1, 6, None, None, 2, Some("JavaScript")),
+      Posting(2, 7, None, None, 4, Some("C"))
+    ))
+    val grouped = testObject.groupedPostings(posts)
+    val scored = testObject.scoredPostings(grouped)
+
+    val actual = scored.collect().sortWith((a, b) => a._2 > b._2)
+    assert(actual.sameElements(Array(
+      (Posting(1, 2, None, None, 3, Some("Java")), 5),
+      (Posting(1, 4, None, None, 2, Some("Scala")), 2)
+    )), "scoredPostings should get the highest scores for groupedPostings")
   }
 
 }
