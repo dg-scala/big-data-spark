@@ -8,7 +8,13 @@ import annotation.tailrec
 import scala.reflect.ClassTag
 
 /** A raw stackoverflow posting, either a question or an answer */
-case class Posting(postingType: Int, id: Int, acceptedAnswer: Option[Int], parentId: Option[Int], score: Int, tags: Option[String]) extends Serializable
+case class Posting(
+  postingType: Int,
+  id: Int,
+  acceptedAnswer: Option[Int],
+  parentId: Option[Int],
+  score: Int,
+  tags: Option[String]) extends Serializable
 
 
 /** The main class */
@@ -78,7 +84,13 @@ class StackOverflow extends Serializable {
 
   /** Group the questions and answers together */
   def groupedPostings(postings: RDD[Posting]): RDD[(Int, Iterable[(Posting, Posting)])] = {
-    ???
+    val questions = postings.filter(p => p.postingType == 1).map(p => (p.id, p))
+    val answers = postings.filter { p => p.parentId match {
+                                        case Some(_) => true
+                                        case None => false
+                                      }
+                                  }.map(p => (p.parentId.get, p))
+    questions.join(answers).groupByKey()
   }
 
 
