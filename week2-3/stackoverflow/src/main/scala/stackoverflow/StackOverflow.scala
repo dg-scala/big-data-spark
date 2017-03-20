@@ -4,7 +4,9 @@ import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
 import org.apache.spark.SparkContext._
 import org.apache.spark.rdd.RDD
+
 import annotation.tailrec
+import scala.collection.{GenMap, GenSeq}
 import scala.reflect.ClassTag
 
 /** A raw stackoverflow posting, either a question or an answer */
@@ -173,7 +175,7 @@ class StackOverflow extends Serializable {
       else
         // sample the space uniformly from each language partition
         vectors.groupByKey.flatMap({
-          case (lang, vectors) => reservoirSampling(lang, vectors.toIterator, perLang).map((lang, _))
+          case (lang, vs) => reservoirSampling(lang, vs.toIterator, perLang).map((lang, _))
         }).collect()
 
     assert(res.length == kmeansKernels, res.length)
@@ -189,9 +191,7 @@ class StackOverflow extends Serializable {
 
   /** Main kmeans computation */
   @tailrec final def kmeans(means: Array[(Int, Int)], vectors: RDD[(Int, Int)], iter: Int = 1, debug: Boolean = false): Array[(Int, Int)] = {
-    val newMeans = means.clone() // you need to compute newMeans
-
-    // TODO: Fill in the newMeans array
+    val newMeans = meansFromClusters(clusterVectors(vectors, means))
     val distance = euclideanDistance(means, newMeans)
 
     if (debug) {
@@ -251,7 +251,7 @@ class StackOverflow extends Serializable {
   def findClosest(p: (Int, Int), centers: Array[(Int, Int)]): Int = {
     var bestIndex = 0
     var closest = Double.PositiveInfinity
-    for (i <- 0 until centers.length) {
+    for (i <- centers.indices) {
       val tempDist = euclideanDistance(p, centers(i))
       if (tempDist < closest) {
         closest = tempDist
@@ -277,7 +277,16 @@ class StackOverflow extends Serializable {
     ((comp1 / count).toInt, (comp2 / count).toInt)
   }
 
+  /** Classify vectors to means */
+  def clusterVectors(vectors: RDD[(Int, Int)], means: Array[(Int, Int)]): RDD[(Int, Iterable[(Int, Int)])] =
+    vectors.groupBy(vector => findClosest(vector, means))
 
+  /** Updates means based on classification */
+  def meansFromClusters(clustered: RDD[(Int, Iterable[(Int, Int)])]): Array[(Int, Int)] =
+    clustered
+      .sortBy(kvs => kvs._1, ascending = true)
+      .map(kvs => averageVectors(kvs._2))
+      .collect()
 
 
   //
