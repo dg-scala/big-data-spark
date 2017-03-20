@@ -133,9 +133,10 @@ class StackOverflow extends Serializable {
       }
     }
 
-    ???
+    scored
+      .filter(sp => firstLangInTag(sp._1.tags, langs).isDefined)
+      .map(sp => (firstLangInTag(sp._1.tags, langs).get * langSpread, sp._2))
   }
-
 
   /** Sample the vectors */
   def sampleVectors(vectors: RDD[(Int, Int)]): Array[(Int, Int)] = {
