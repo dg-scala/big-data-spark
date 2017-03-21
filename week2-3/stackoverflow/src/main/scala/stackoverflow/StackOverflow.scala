@@ -33,7 +33,7 @@ object StackOverflow extends StackOverflow {
     val grouped = groupedPostings(raw)
     val scored  = scoredPostings(grouped)
     val vectors = vectorPostings(scored)
-//    assert(vectors.count() == 2121822, "Incorrect number of vectors: " + vectors.count())
+    assert(vectors.count() == 2121822, "Incorrect number of vectors: " + vectors.count())
 
     val means   = kmeans(sampleVectors(vectors), vectors, debug = true)
     val results = clusterResults(means, vectors)
@@ -237,7 +237,7 @@ class StackOverflow extends Serializable {
 
   /** Return the euclidean distance between two points */
   def euclideanDistance(a1: Array[(Int, Int)], a2: Array[(Int, Int)]): Double = {
-    assert(a1.length == a2.length)
+    assert(a1.length == a2.length, "a1.length = ")
     var sum = 0d
     var idx = 0
     while(idx < a1.length) {
@@ -278,8 +278,16 @@ class StackOverflow extends Serializable {
   }
 
   /** Classify vectors to means */
-  def clusterVectors(vectors: RDD[(Int, Int)], means: Array[(Int, Int)]): RDD[(Int, Iterable[(Int, Int)])] =
-    vectors.groupBy(vector => findClosest(vector, means))
+  def clusterVectors(vectors: RDD[(Int, Int)], means: Array[(Int, Int)]): RDD[(Int, Iterable[(Int, Int)])] = {
+    val grouped = vectors.groupBy(vector => findClosest(vector, means))
+    val emptyClusters =
+      StackOverflow.sc
+        .parallelize(means)
+        .groupBy(means.indexOf(_))
+        .subtract(grouped)
+
+    grouped.union(emptyClusters)
+  }
 
   /** Updates means based on classification */
   def meansFromClusters(clustered: RDD[(Int, Iterable[(Int, Int)])]): Array[(Int, Int)] =
