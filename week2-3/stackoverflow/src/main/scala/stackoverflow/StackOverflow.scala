@@ -137,7 +137,7 @@ class StackOverflow extends Serializable {
 
     scored
       .filter(sp => firstLangInTag(sp._1.tags, langs).isDefined)
-      .map(sp => (firstLangInTag(sp._1.tags, langs).get * langSpread, sp._2))
+      .map(sp => (firstLangInTag(sp._1.tags, langs).get * langSpread, sp._2)).cache()
   }
 
   /** Sample the vectors */
