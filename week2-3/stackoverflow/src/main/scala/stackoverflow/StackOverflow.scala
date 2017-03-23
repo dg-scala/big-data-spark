@@ -315,9 +315,11 @@ class StackOverflow extends Serializable {
       val langPercent: Double = 100.0 * byLanguage(dominantLanguage).size / clusterSize
       val medianScore: Int = {
         val sortedScores = vs.map(_._2).toArray.sorted
-        if (sortedScores.length % 2 == 1) sortedScores(sortedScores.length / 2)
-        else (sortedScores(sortedScores.length / 2)
-              + sortedScores(sortedScores.length / 2 - 1)) / 2
+        val halfLength = sortedScores.length / 2
+        if (sortedScores.length % 2 == 1)
+          sortedScores(halfLength)
+        else
+          (sortedScores(halfLength) + sortedScores(halfLength - 1)) / 2
       }
 
       (langLabel, langPercent, clusterSize, medianScore)
