@@ -1,0 +1,29 @@
+de grader output
+Your overall score for this assignment is 0.00 out of 10.00
+
+
+We were not able to compile our tests, and therefore we could not correct your submission.
+
+The most likely reason for this problem is that your submitted code uses different names
+for methods, classes, objects or different types than expected.
+
+In principle, this can only arise if you changed some names or types in the code that we
+provide, for instance a method name or a parameter type.
+
+To diagnose your problem, perform the following steps:
+ - Run the tests that we provide with our hand-out. These tests verify that all names and
+   types are correct. In case these tests pass, but you still see this message, please post
+   a report on the forums [1].
+ - Take a careful look at the error messages from the Scala compiler below. They should give
+   you a hint where your code has an unexpected shape.
+
+If you cannot find a solution, ask for help on the discussion forums on the course website.
+
+======== TEST COMPILATION FAILURES ========
+/grader/repository/courses/bigdata/src/test/scala/timeusage/TimeUsageSuite.scala:185: value timeUsageGroupedTyped is not a member of object timeusage.TimeUsage
+      val collectedResult3 = TimeUsage.timeUsageGroupedTyped(TimeUsage.timeUsageSummaryTyped(summedResult)).collect()
+                                       ^
+/grader/repository/courses/bigdata/src/test/scala/timeusage/TimeUsageSuite.scala:185: value timeUsageSummaryTyped is not a member of object timeusage.TimeUsage
+      val collectedResult3 = TimeUsage.timeUsageGroupedTyped(TimeUsage.timeUsageSummaryTyped(summedResult)).collect()
+                                                                       ^
+two errors found
