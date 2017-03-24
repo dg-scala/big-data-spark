@@ -309,7 +309,7 @@ class StackOverflow extends Serializable {
         if (sortedScores.length % 2 == 1)
           sortedScores(halfLength)
         else
-          Math.ceil((sortedScores(halfLength) + sortedScores(halfLength - 1)).toDouble / 2).toInt
+          (sortedScores(halfLength) + sortedScores(halfLength - 1)) / 2
       }
 
       (langLabel, langPercent, clusterSize, medianScore)
