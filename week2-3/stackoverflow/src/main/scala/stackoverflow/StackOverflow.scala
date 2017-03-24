@@ -191,7 +191,7 @@ class StackOverflow extends Serializable {
 
   /** Main kmeans computation */
   @tailrec final def kmeans(means: Array[(Int, Int)], vectors: RDD[(Int, Int)], iter: Int = 1, debug: Boolean = false): Array[(Int, Int)] = {
-    val newMeans = meansFromClusters(clusterVectors(vectors, means))
+    val newMeans = meansFromClusters(clusterVectors(vectors, means), means.clone())
     val distance = euclideanDistance(means, newMeans)
 
     if (debug) {
@@ -277,24 +277,14 @@ class StackOverflow extends Serializable {
   }
 
   /** Classify vectors to means */
-  def clusterVectors(vectors: RDD[(Int, Int)], means: Array[(Int, Int)]): RDD[(Int, Iterable[(Int, Int)])] = {
-    val grouped = vectors.groupBy(vector => findClosest(vector, means))
-    val emptyClusters =
-      StackOverflow.sc
-        .parallelize(means.zipWithIndex.map(kv => (kv._2, Iterable(kv._1))))
-        .subtractByKey(grouped)
-
-    grouped.union(emptyClusters)
-  }
+  def clusterVectors(vectors: RDD[(Int, Int)], means: Array[(Int, Int)]): RDD[(Int, Iterable[(Int, Int)])] =
+    vectors.groupBy(vector => findClosest(vector, means))
 
   /** Updates means based on classification */
-  def meansFromClusters(clustered: RDD[(Int, Iterable[(Int, Int)])]): Array[(Int, Int)] =
-    clustered
-      .sortBy(kvs => kvs._1, ascending = true)
-      .map(kvs => averageVectors(kvs._2))
-      .collect()
-
-
+  def meansFromClusters(clustered: RDD[(Int, Iterable[(Int, Int)])], means: Array[(Int, Int)]): Array[(Int, Int)] = {
+    val clusteredMeans = clustered.mapValues(cluster => averageVectors(cluster)).collectAsMap()
+    clusteredMeans.foldLeft(means)((newMeans, kv) => newMeans.updated(kv._1, kv._2))
+  }
   //
   //
   //  Displaying results:
@@ -319,7 +309,7 @@ class StackOverflow extends Serializable {
         if (sortedScores.length % 2 == 1)
           sortedScores(halfLength)
         else
-          (sortedScores(halfLength) + sortedScores(halfLength - 1)) / 2
+          Math.ceil((sortedScores(halfLength) + sortedScores(halfLength - 1)).toDouble / 2).toInt
       }
 
       (langLabel, langPercent, clusterSize, medianScore)
