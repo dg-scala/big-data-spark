@@ -110,7 +110,7 @@ object TimeUsage {
       prefixes.foldLeft(false)((b, prefix) => b || str.startsWith(prefix))
 
     def primaryActivity(colName: String): Boolean =
-      startsWithOneOf(colName, List("t01", "t032", "t11", "t1801", "t1803"))
+      startsWithOneOf(colName, List("t01", "t03", "t11", "t1801", "t1803"))
 
     def workActivity(colName: String): Boolean =
       startsWithOneOf(colName, List("t05", "t1805"))
