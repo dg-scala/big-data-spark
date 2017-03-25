@@ -63,15 +63,20 @@ object TimeUsage {
     *         have type Double. None of the fields are nullable.
     * @param columnNames Column names of the DataFrame
     */
-  def dfSchema(columnNames: List[String]): StructType =
-    ???
+  def dfSchema(columnNames: List[String]): StructType = columnNames match {
+    case Nil => StructType(Nil)
+    case col :: cols =>
+      StructType(
+        StructField(col, StringType, nullable = false) ::
+        cols.foldRight(List.empty[StructField])((c, cs) => StructField(c, DoubleType, nullable = false) :: cs)
+      )
+  }
 
 
   /** @return An RDD Row compatible with the schema produced by `dfSchema`
     * @param line Raw fields
     */
-  def row(line: List[String]): Row =
-    ???
+  def row(line: List[String]): Row = Row.fromSeq(line)
 
   /** @return The initial data frame columns partitioned in three groups: primary needs (sleeping, eating, etc.),
     *         work and other (leisure activities)
